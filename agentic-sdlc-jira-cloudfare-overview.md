@@ -40,13 +40,13 @@ flowchart LR
 
 ## 3) Components and Responsibilities
 
-## 3.1 Jira Cloud
+### 3.1 Jira Cloud
 
 - Source of truth for business work items (Story/Task/Bug).
 - Emits webhook events (Issue Created, Issue Updated).
 - Can be filtered via JQL (example: `labels = agentic-sdlc`).
 
-## 3.2 Cloudflare Worker (`jira-github-bridge`)
+### 3.2 Cloudflare Worker (`jira-github-bridge`)
 
 - Public HTTPS endpoint for Jira webhooks.
 - Validates shared secret header (`x-bridge-token`).
@@ -59,7 +59,7 @@ Typical env vars:
 - `GH_OWNER` (e.g., `vinipx`)
 - `GH_ORCHESTRATOR_REPO` (e.g., `service-alpha` if orchestrator is there)
 
-## 3.3 Orchestrator Workflow
+### 3.3 Orchestrator Workflow
 
 - Listens to `repository_dispatch` event (type: `jira_issue_event`).
 - Fetches Jira issue details.
@@ -67,7 +67,7 @@ Typical env vars:
 - Generates per-repo plan docs.
 - Creates PRs in impacted repos with plan files.
 
-## 3.4 Repository Implementation Workflow
+### 3.4 Repository Implementation Workflow
 
 - Triggered when plan file is merged into `main`.
 - Creates implementation branch.
@@ -76,7 +76,7 @@ Typical env vars:
 - Optional auto-fix logic on CI failures.
 - Opens implementation PR.
 
-## 3.5 GitHub App (`agentic-ci-fixer`) [Recommended]
+### 3.5 GitHub App (`agentic-ci-fixer`) [Recommended]
 
 - Replaces PAT for safer automation.
 - Fine-grained, installable permissions across repos.
@@ -142,13 +142,13 @@ Example behavior:
 
 ## 7) Security Model
 
-## 7.1 Worker Security
+### 7.1 Worker Security
 
 - Shared secret header (`x-bridge-token`) from Jira to Worker.
 - Worker secrets managed in Cloudflare Variables/Secrets.
 - Do not expose tokens in logs or responses.
 
-## 7.2 GitHub Security
+### 7.2 GitHub Security
 
 - Prefer GitHub App over PAT for automation.
 - Minimum required permissions:
@@ -157,7 +157,7 @@ Example behavior:
   - Metadata: Read
 - Install app only on required repositories.
 
-## 7.3 Jira Security
+### 7.3 Jira Security
 
 - Use webhook scope filters (JQL) to reduce noise.
 - Restrict events to required transitions (created/updated).
@@ -211,23 +211,23 @@ In `agentic-implementation.yml`, use this order:
 
 ## 10) Use Cases
 
-## 10.1 Standard Feature Delivery
+### 10.1 Standard Feature Delivery
 - Jira Story created (`AISDLC-123`).
 - Plan PRs created in 2 impacted repos.
 - Plans merged.
 - Implementation PRs generated with validated CI.
 
-## 10.2 Cross-Repo Change
+### 10.2 Cross-Repo Change
 - Shared DTO change in `common-library`.
 - Downstream implementation plans in services.
 - Coordinated PR creation and build validation.
 
-## 10.3 Regression Recovery
+### 10.3 Regression Recovery
 - CI fails due to known compile pattern.
 - Auto-fix rule applies safe patch.
 - Build re-run passes, PR remains green.
 
-## 10.4 Manual Replay / Backfill
+### 10.4 Manual Replay / Backfill
 - Use `workflow_dispatch` with `jira_key` for rerun.
 - Useful when webhook was missed or config changed.
 
@@ -235,7 +235,7 @@ In `agentic-implementation.yml`, use this order:
 
 ## 11) Operational Runbook
 
-## 11.1 Smoke Test Bridge
+### 11.1 Smoke Test Bridge
 
 ```bash
 curl -i -X POST "https://jira-github-bridge.<subdomain>.workers.dev/" \
@@ -247,16 +247,16 @@ curl -i -X POST "https://jira-github-bridge.<subdomain>.workers.dev/" \
 Expected:
 - `200 Dispatched AISDLC-2`
 
-## 11.2 Verify Dispatch
+### 11.2 Verify Dispatch
 
 - Check orchestrator workflow run at trigger time.
 - Confirm `repository_dispatch` event payload has Jira key.
 
-## 11.3 Verify Fan-Out
+### 11.3 Verify Fan-Out
 
 - Confirm plan PR exists for each impacted repo.
 
-## 11.4 Verify Implementation
+### 11.4 Verify Implementation
 
 - Confirm implementation workflow triggered on merged plan.
 - Confirm CI pass/fail handling behavior.
