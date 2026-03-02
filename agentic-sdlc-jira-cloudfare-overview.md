@@ -166,24 +166,24 @@ Example behavior:
 
 ## 8) Failure Modes and Troubleshooting
 
-## 8.1 Worker returns `Method Not Allowed`
+### 8.1 Worker returns `Method Not Allowed`
 - Expected for browser GET.
 - Worker is POST-only.
 - Test with `curl -X POST`.
 
-## 8.2 Worker returns `401 Unauthorized`
+### 8.2 Worker returns `401 Unauthorized`
 - `x-bridge-token` missing or mismatched against `BRIDGE_TOKEN`.
 
-## 8.3 Worker returns `502 GitHub dispatch failed: 404`
+### 8.3 Worker returns `502 GitHub dispatch failed: 404`
 - Wrong `GH_OWNER` / `GH_ORCHESTRATOR_REPO`.
 - Token lacks access to target repo.
 - Wrong endpoint or private repo visibility mismatch.
 
-## 8.4 GitHub workflow `403 Resource not accessible by personal access token`
+### 8.4 GitHub workflow `403 Resource not accessible by personal access token`
 - Token lacks `pull_requests:write` or repo access.
 - Replace with GitHub App installation token.
 
-## 8.5 Compilation failure in implementation PR
+### 8.5 Compilation failure in implementation PR
 - Auto-fix step may be placeholder (no actual patch logic).
 - Add deterministic fixers or LLM fixer integration.
 - Ensure retry loop modifies code between retries.
