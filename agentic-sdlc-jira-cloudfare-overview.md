@@ -319,3 +319,176 @@ Expected:
 - Platform/DevEx owns orchestration pipelines and app credentials.
 - Service teams own implementation workflow behavior in each repo.
 - Product/Engineering owns Jira workflow and issue hygiene.
+
+---
+
+## 18) Detailed Configuration Guide (What, Where, Why)
+
+This section explains exactly where each integration is configured and why each setting exists.
+
+### 18.1 Jira Webhook Configuration (Sender)
+
+**Where configured:** Jira Cloud (Admin)  
+- Jira Settings → System → Webhooks (or Jira Automation with “Send web request”)
+
+**What to configure:**
+- **URL**: Cloudflare Worker endpoint  
+  `https://jira-github-bridge.<subdomain>.workers.dev/`
+- **Method**: `POST`
+- **Events**: Issue created / Issue updated (as needed)
+- **Optional JQL filter**:  
+  Example: `project = AISDLC AND labels = agentic-sdlc`
+- **Custom header**:
+  - `x-bridge-token: <YOUR_SHARED_SECRET>`
+
+**Why this matters:**
+- Jira is the **event source**.
+- Header authenticates Jira as trusted caller.
+- JQL avoids triggering pipeline for unrelated issues.
+
+> Important: creating a Jira issue manually in the UI does **not** require manually adding headers.  
+> Jira itself sends the webhook and includes configured custom headers automatically.
+
+---
+
+### 18.2 Cloudflare Worker Configuration (Bridge/Adapter)
+
+**Where configured:** Cloudflare Workers dashboard (or `wrangler` config)
+
+**Required Worker secrets/vars:**
+- `BRIDGE_TOKEN` → must match Jira `x-bridge-token`
+- `GH_TOKEN` (or GitHub App token flow) → used to call GitHub API
+- `GH_OWNER` → e.g. `vinipx`
+- `GH_ORCHESTRATOR_REPO` → repo receiving `repository_dispatch`
+
+**Worker responsibilities:**
+1. Accept POST webhook from Jira
+2. Verify `x-bridge-token`
+3. Extract Jira key from payload
+4. Trigger GitHub `repository_dispatch` event
+
+**Why Worker exists (instead of Jira calling GitHub directly):**
+- Security isolation (hide GitHub auth from Jira)
+- Payload normalization (Jira payload variants → stable `jira_key`)
+- Centralized control (logging, retries, filtering, rate limiting)
+
+---
+
+### 18.3 GitHub Orchestrator Configuration
+
+**Where configured:** Orchestrator repository workflow  
+- File: `.github/workflows/jira-webhook-orchestrator.yml`
+
+**Must include trigger:**
+- `on: repository_dispatch` with type `jira_issue_event`
+
+**Expected dispatch payload:**
+- `client_payload.jira_key` (e.g. `AISDLC-2`)
+
+**Why this is needed:**
+- Decouples external webhook from internal planning logic.
+- Converts Jira issue context into plan PRs across impacted repos.
+
+---
+
+### 18.4 GitHub App Configuration (Recommended over PAT)
+
+**Where configured:** GitHub → Settings → Developer settings → GitHub Apps
+
+**Create one app for all repos** (recommended):
+- Install on:
+  - `vinipx/service-alpha`
+  - `vinipx/service-beta`
+  - `vinipx/common-library`
+
+**Minimum repository permissions:**
+- Contents: Read & Write
+- Pull requests: Read & Write
+- Metadata: Read
+
+**Store in Actions secrets:**
+- `GH_APP_ID`
+- `GH_APP_PRIVATE_KEY`
+- `GH_APP_INSTALLATION_ID` (if needed by your token flow)
+
+**Why GitHub App over PAT:**
+- Better security model and auditable permissions
+- Easier rotation and scoping
+- Cleaner cross-repo automation at scale
+
+---
+
+### 18.5 Repo Implementation Workflow Configuration
+
+**Where configured:** Each impacted repo  
+- File: `.github/workflows/agentic-implementation.yml`
+
+**Recommended trigger:**
+- `push` to `main` for `docs/implementation-plans/*-plan.md`
+- optional `workflow_dispatch` for rerun/backfill
+
+**Recommended sequence:**
+1. Resolve plan context
+2. Guard idempotency (`*-done.md`)
+3. Create impl branch
+4. Apply code changes
+5. Build/Test
+6. Auto-fix (if enabled and configured)
+7. Commit/push
+8. Open implementation PR
+
+**Why this order:**
+- Prevents “done” marker before validating code.
+- Ensures PR quality and traceability.
+
+---
+
+### 18.6 Header/Auth Reasoning Deep Dive
+
+#### Why `x-bridge-token`?
+Worker URL is public internet endpoint.  
+Without token validation, anyone could trigger your pipeline by posting fake issue payloads.
+
+#### Is the header added when ticket is manually created in Jira?
+Yes—indirectly.  
+Manual issue creation triggers Jira event → Jira webhook sender includes configured headers.
+
+#### Why still test with `curl` manually?
+To validate Worker independently of Jira UI/events and isolate problems quickly.
+
+---
+
+### 18.7 Validation Checklist (End-to-End)
+
+1. **Jira webhook delivery logs** show 2xx to Worker.
+2. Worker returns `200 Dispatched <JIRA_KEY>`.
+3. Orchestrator workflow run appears with matching timestamp.
+4. Plan PRs created in all impacted repos.
+5. Implementation workflows trigger after plan merge.
+6. CI passes OR auto-fix attempts are visible and deterministic.
+7. Implementation PRs contain Jira references.
+
+---
+
+### 18.8 Common Misconfigurations and Exact Fixes
+
+- **401 from Worker**
+  - Fix: Jira header token does not match `BRIDGE_TOKEN`.
+- **502 + GitHub 404 from Worker**
+  - Fix: verify `GH_OWNER`, `GH_ORCHESTRATOR_REPO`, and token repo access.
+- **403 in GitHub Actions (“Resource not accessible by personal access token”)**
+  - Fix: move to GitHub App token or expand PAT scopes + repo access.
+- **Auto-fix loop not fixing anything**
+  - Fix: replace placeholder TODO with real code-modifying logic before retry.
+
+---
+
+### 18.9 Suggested Documentation Matrix
+
+Maintain these docs together:
+- `agentic-sdlc-jira-cloudfare-overview.md` (architecture + integration)
+- `docs/OPERATIONS_RUNBOOK.md` (incident and recovery)
+- `docs/SECURITY_MODEL.md` (tokens, scopes, rotation policy)
+- `docs/WORKFLOW_CONTRACTS.md` (event payload schemas and branch/file conventions)
+
+This prevents tribal knowledge and speeds onboarding.
