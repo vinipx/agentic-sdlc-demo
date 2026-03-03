@@ -1,28 +1,77 @@
-# Agentic SDLC Phases Plan Repository
+# Agentic SDLC Demo (Jira Automation + Cloudflare + GitHub)
 
-This repository stores architecture, process, and demo artifacts for the Agentic SDLC prototype using GitHub Copilot agents in a multi-repository Java ecosystem.
+This repository contains architecture, process, and operational assets for an **Agentic SDLC** prototype that connects **Jira Automation** to **GitHub orchestration workflows** through a **Cloudflare Worker bridge**.
 
-## Contents
+---
 
-- `phase-1-task-1.2-artifacts.md`  
-  Consolidated Phase 1 Task 1.2 deliverables:
-  - `.github/copilot-instructions.md` for each repo
-  - `CODEOWNERS` for each repo
-  - `java-coding-guidelines.md`
+## What This Demo Implements
 
-- `phase-2-agentic-workflow-architecture.md`  
-  End-to-end architectural sequence from Jira ingestion to PR and traceability closure.
+- Jira issue events trigger automation flows
+- Jira Automation sends HTTP requests to a Cloudflare Worker
+- Worker validates/authenticates and dispatches a GitHub event
+- GitHub orchestrator creates implementation plan PRs across impacted repositories
+- Repository workflows implement changes, run CI, and open implementation PRs
+- End-to-end traceability from Jira issue → Plan PR → Implementation PR
 
-- `phase-3-demo-script.md`  
-  Client-facing demo runbook and presenter talk track.
+---
 
-## Prototype Scope
+## Repository Contents
 
-Target repositories:
+### Core architecture and flow
+- `agentic-sdlc-jira-cloudfare-overview.md`  
+  Primary end-to-end architecture and integration guide (with diagrams, troubleshooting, and configuration details).
+
+- `WORKFLOW_CONTRACTS.md`  
+  Event and workflow contracts across Jira Automation, Worker, orchestrator, and implementation workflows.
+
+### Operational and governance docs
+- `docs/JIRA_WEBHOOK_SETUP.md`  
+  Jira **Automation** setup guide (Send web request, headers, payload, validation).
+
+- `docs/OPERATIONS_RUNBOOK.md`  
+  Incident response and operational troubleshooting playbook.
+
+- `docs/SECURITY_MODEL.md`  
+  Security design, secret handling, auth model, and least-privilege recommendations.
+
+- `docs/WORKFLOW_CONTRACTS.md`  
+  Contracts reference copy under `/docs` for documentation navigation consistency.
+
+---
+
+## Target Repositories in Scope
 
 - `vinipx/service-alpha`
 - `vinipx/service-beta`
 - `vinipx/common-library`
+
+---
+
+## Quick Start (New Users)
+
+1. Read **`agentic-sdlc-jira-cloudfare-overview.md`** for the full architecture.
+2. Configure Jira sender using **`docs/JIRA_WEBHOOK_SETUP.md`** (Automation-based).
+3. Validate contracts in **`WORKFLOW_CONTRACTS.md`**.
+4. Run smoke test and troubleshooting from **`docs/OPERATIONS_RUNBOOK.md`**.
+5. Review security requirements in **`docs/SECURITY_MODEL.md`**.
+
+---
+
+## End-to-End Flow (Simplified)
+
+```mermaid
+flowchart LR
+  A[Jira Issue Created/Updated] --> B[Jira Automation Rule]
+  B --> C[Cloudflare Worker]
+  C --> D[GitHub repository_dispatch]
+  D --> E[Orchestrator Workflow]
+  E --> F[Plan PRs in impacted repos]
+  F --> G[Implementation Workflow]
+  G --> H[Build/Test + Optional Auto-fix]
+  H --> I[Implementation PR]
+```
+
+---
 
 ## Design Principles
 
@@ -31,19 +80,27 @@ Target repositories:
 - **Test-first quality posture**
 - **Code-owner enforced approvals**
 - **Jira-to-code traceability**
+- **Security by default** (header validation + least privilege + app-based auth)
 
-## How to Use This Repository
+---
 
-1. Use `phase-1-task-1.2-artifacts.md` to bootstrap governance files.
-2. Use `phase-2-agentic-workflow-architecture.md` to explain technical flow and controls.
-3. Use `phase-3-demo-script.md` to run stakeholder/client demonstrations.
+## Current Integration Decision
+
+For this demo, **Jira Automation** is the recommended sender mechanism (instead of Jira System Webhooks), because it provides:
+- explicit header configuration (`x-bridge-token`)
+- better audit visibility
+- easier rule-level filtering and control
+
+---
 
 ## Recommended Next Additions
 
-- `agentic-sdlc-workflow.yml` (GitHub Actions orchestration)
-- `implementation-plan-template.json`
-- PR template with mandatory architecture/testing sections
-- Architecture diagram assets (`/docs/diagrams`)
+- `docs/DECISION_LOG.md` (architecture decisions over time)
+- `docs/ONBOARDING_CHECKLIST.md` (new project rollout checklist)
+- `docs/DIAGRAMS.md` (diagram index + exported images)
+- PR template with mandatory architecture/testing/risk sections
+
+---
 
 ## Audience
 
