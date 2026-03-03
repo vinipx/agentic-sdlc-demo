@@ -25,16 +25,16 @@ This repository contains architecture, process, and operational assets for an **
   Event and workflow contracts across Jira Automation, Worker, orchestrator, and implementation workflows.
 
 ### Operational and governance docs
-- `docs/JIRA_WEBHOOK_SETUP.md`  
+- `JIRA_WEBHOOK_SETUP.md`  
   Jira **Automation** setup guide (Send web request, headers, payload, validation).
 
-- `docs/OPERATIONS_RUNBOOK.md`  
+- `OPERATIONS_RUNBOOK.md`  
   Incident response and operational troubleshooting playbook.
 
-- `docs/SECURITY_MODEL.md`  
+- `SECURITY_MODEL.md`  
   Security design, secret handling, auth model, and least-privilege recommendations.
 
-- `docs/WORKFLOW_CONTRACTS.md`  
+- `WORKFLOW_CONTRACTS.md`  
   Contracts reference copy under `/docs` for documentation navigation consistency.
 
 ---
