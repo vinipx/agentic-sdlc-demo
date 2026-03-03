@@ -3,14 +3,22 @@
 ## 1) Purpose
 
 Define stable contracts between:
-- Jira webhook payload
+- Jira Automation payload/action
 - Cloudflare Worker bridge
 - Orchestrator workflow
 - Repository implementation workflows
 
-## 2) Event Contract: Jira → Worker
+## 2) Event Contract: Jira Automation → Worker
 
-### Expected minimum payload (examples)
+### Jira Automation action
+- Action: **Send web request**
+- Method: `POST`
+- URL: Worker endpoint
+- Required headers:
+  - `Content-Type: application/json`
+  - `x-bridge-token: <shared-secret>`
+
+### Expected minimum body (examples)
 ```json
 { "issue": { "key": "AISDLC-2" } }
 ```
@@ -20,8 +28,7 @@ Worker extraction order:
 2. `body.data.issue.key`
 3. `body.key`
 
-Required header:
-- `x-bridge-token: <shared-secret>`
+---
 
 ## 3) Dispatch Contract: Worker → GitHub
 
@@ -37,6 +44,8 @@ Body:
   }
 }
 ```
+
+---
 
 ## 4) Orchestrator Contract
 
@@ -54,6 +63,8 @@ Output expectations:
   - `[<JIRA_KEY>] Implementation plan`
 - Branch format:
   - `agentic-plan/<safe_jira>-<run_id>`
+
+---
 
 ## 5) Implementation Workflow Contract
 
@@ -81,6 +92,8 @@ Required behavior:
 6. Commit + push branch
 7. Open implementation PR
 
+---
+
 ## 6) PR Contract
 
 Implementation PR title:
@@ -92,6 +105,8 @@ PR body should include:
 - Risk level
 - Impacted repositories
 
+---
+
 ## 7) Failure Handling Contract
 
 - Build failure must block completion unless fixed
@@ -99,11 +114,14 @@ PR body should include:
 - No silent success when CI fails
 - Logs must identify first root-cause error
 
+---
+
 ## 8) Compatibility Rules
 
 - Keep branch/file naming stable for automation interoperability
 - If contract changes, update:
-  1. Worker
-  2. Orchestrator workflow
-  3. Implementation workflow
-  4. This document
+  1. Jira Automation rule
+  2. Worker
+  3. Orchestrator workflow
+  4. Implementation workflow
+  5. This document
