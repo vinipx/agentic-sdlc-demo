@@ -93,15 +93,6 @@ For this demo, **Jira Automation** is the recommended sender mechanism (instead 
 
 ---
 
-## Recommended Next Additions
-
-- `docs/DECISION_LOG.md` (architecture decisions over time)
-- `docs/ONBOARDING_CHECKLIST.md` (new project rollout checklist)
-- `docs/DIAGRAMS.md` (diagram index + exported images)
-- PR template with mandatory architecture/testing/risk sections
-
----
-
 ## Audience
 
 - Solution Architects
